@@ -115,8 +115,7 @@ $result = mysqli_query($connection, $query) or exit (json_encode ( array (
 
 if($result) {
     echo ( json_encode ( array (
-                'status' => 'success',
-                'message' => 'application was registered'
+                'status' => 'success'
     )));
 }
 mysqli_close($connection);
