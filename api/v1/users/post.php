@@ -3,6 +3,7 @@
 require_once '../get_token.php';
 require_once '../check_auth.php';
 require_once '../get_user_type.php';
+require_once '../validation.php';
 
 $id_user = check_auth($token, $connection);
 
@@ -11,7 +12,7 @@ if ($id_user != false) {
     
     if ($user_type == 0) {
         
-        if (isset($_POST['full_name'])) {
+        if (isset($_POST['full_name']) && !empty($_POST['full_name'])) {
             $full_name = trim(htmlspecialchars(stripslashes($_POST['full_name'])));
         }
         else {
@@ -21,7 +22,7 @@ if ($id_user != false) {
             )));
         }
         
-        if (isset($_POST['login'])) {
+        if (isset($_POST['login']) && !empty($_POST['login'])) {
             $login = trim(htmlspecialchars(stripslashes($_POST['login'])));
         }
         else {
@@ -31,7 +32,7 @@ if ($id_user != false) {
             )));
         }
         
-        if (isset($_POST['mail'])) {
+        if (isset($_POST['mail']) && !empty($_POST['mail'])) {
             $mail = trim(htmlspecialchars(stripslashes($_POST['mail'])));
         }
         else {
@@ -41,7 +42,7 @@ if ($id_user != false) {
             )));
         }
         
-        if (isset($_POST['password'])) {
+        if (isset($_POST['password']) && !empty($_POST['password'])) {
             $password = trim(htmlspecialchars(stripslashes($_POST['password'])));
         }
         else {
@@ -51,7 +52,7 @@ if ($id_user != false) {
             )));
         }
         
-        if (isset($_POST['repeat_password'])) {
+        if (isset($_POST['repeat_password']) && !empty($_POST['repeat_password'])) {
             $repeat_password = trim(htmlspecialchars(stripslashes($_POST['repeat_password'])));
         }
         else {
@@ -62,7 +63,12 @@ if ($id_user != false) {
         }
         
         if (isset($_POST['user_type'])) {
-            $user_type = trim(htmlspecialchars(stripslashes($_POST['user_type'])));
+            if (!empty($_POST['user_type'])) {
+                $user_type = trim(htmlspecialchars(stripslashes($_POST['user_type'])));
+            }
+            else {
+                $user_type = 2;
+            }
         }
         else {
             exit(json_encode(array(
@@ -71,7 +77,7 @@ if ($id_user != false) {
             )));
         }
         
-        if (isset($_POST['user_post'])) {
+        if (isset($_POST['user_post']) && !empty($_POST['user_post'])) {
             $user_post = trim(htmlspecialchars(stripslashes($_POST['user_post'])));
         }
         else {
@@ -81,11 +87,24 @@ if ($id_user != false) {
             )));
         }
 
-        // TODO: code for validation new user data
+        validation('full_name', $full_name, $connection);
+        validation('login', $login, $connection);
+        validation('mail', $mail, $connection);
+        validation('password', $password, $connection);
+
+        if ($password !== $repeat_password) {
+            exit ( json_encode ( array (
+                'status' => 'error',
+                'message' => 'Passwords are not equal'
+            )));
+        }
+
+        validation('user_type', $user_type, $connection);
+        validation('user_post', $user_post, $connection);
 
         $query = "insert into users
                   (full_name, login, mail, password, user_type, user_post)
-                  values ('$full_name', '$login', '$mail', '$password', $user_type, '$user_post')";
+                  values ('$full_name', '$login', '$mail', '" . md5($password) . ""', $user_type, '$user_post')";
 
         $result = mysqli_query($connection, $query) or
                   exit(json_encode(array(
