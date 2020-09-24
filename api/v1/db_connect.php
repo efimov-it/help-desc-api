@@ -1,9 +1,8 @@
 <?php
-
 $db_host = 'localhost'; 
-$db_name = 'help_stankin_2020';
-$db_user = 'root'; 
-$db_password = 'root';
+$db_name = 'u1098369_help';
+$db_user = 'u1098369_help'; 
+$db_password = '001122Man';
 
 $connection = mysqli_connect($db_host, $db_user, $db_password, $db_name) 
     or die(json_encode ( array (

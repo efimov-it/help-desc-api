@@ -89,7 +89,7 @@ if ($phone_type < 0 || $phone_type > 1) {
     )));
 }
 
-if ( strlen ( $phone_number ) != 18) {
+if ( strlen ( $phone_number ) > 18) {
     exit ( json_encode ( array (
                 'status' => 'error',
                 'message' => 'Invalid value of phone_number'
@@ -103,19 +103,35 @@ if (!strrpos($mail, '@') || !strrpos($mail, '.')) {
     )));
 }
 
+$application_code = time();
+
 $query ="insert into applications
-         (full_name, phone_type, phone_number, mail, office, unit, dept, application_text)
-         values ('$full_name', $phone_type, '$phone_number', '$mail', '$office', '$unit', '$dept', '$application_text')";
+         (full_name, phone_type, phone_number, mail, office, unit, dept, application_text, application_code)
+         values ('$full_name', $phone_type, '$phone_number', '$mail', '$office', '$unit', '$dept', '$application_text', '$application_code')";
 
 $result = mysqli_query($connection, $query) or exit (json_encode ( array (
                                                         'status' => 'error',
-                                                        'message' => 'data base error',
+                                                        'message' => 'Data base error',
                                                         'mysql_error' => mysqli_error($connection)
 )));
 
 if($result) {
+
+    $mail_html = file_get_contents('./application_created_mail.html');
+
+    $mail_html = substr_replace($mail_html, $full_name, strpos($mail_html, "[full_name]"), 11);
+    $mail_html = substr_replace($mail_html, $application_code, strpos($mail_html, "[key]"), 5);
+    mail($_GET['mail'],
+         'Регистрация заявки на сайте тех. поддержки МГТУ "Станкин"',
+         $mail_html,
+         "From: Тех. поддержка МГТУ \"Станкин\" <bot@help.stankin.ru>\r\nContent-Type: text/html; charset=UTF-8");
+
+
     echo ( json_encode ( array (
-                'status' => 'success'
+                'status' => 'success',
+                'data' => array(
+                    'code' => $application_code
+                )
     )));
 }
 mysqli_close($connection);

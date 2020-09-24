@@ -35,6 +35,7 @@ $result = mysqli_query($connection, $query) or
 if (mysqli_num_rows($result) > 0) {
     $row = mysqli_fetch_array($result);
     $id_user = $row['id_user'];
+    $user_type = $row['user_type'];
 
     $query = "select *
               from auth
@@ -64,7 +65,8 @@ if (mysqli_num_rows($result) > 0) {
                 'status' => 'success',
                 'data' => array (
                     'token' => $new_token,
-                    'expires_in' => $expires_in
+                    'expires_in' => $expires_in,
+                    'user_type' => $user_type
                 )
             )));
         }
@@ -85,7 +87,8 @@ if (mysqli_num_rows($result) > 0) {
                 'status' => 'success',
                 'data' => array (
                     'token' => $token,
-                    'expires_in' => $expires_in
+                    'expires_in' => $expires_in,
+                    'user_type' => $user_type
                 )
             )));
         }

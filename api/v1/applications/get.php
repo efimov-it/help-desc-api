@@ -12,12 +12,14 @@ if ($id_user == false) {
     )));
 }
 
-$request = '';
+$where_string = '';
+$sort_string = '';
 $items_count = 20;
+$current_page = 1;
 
 if (isset($_GET['search'])) {
     $search = trim(htmlspecialchars(stripslashes($_GET['search'])));
-    $request = " where full_name like '%$search%' or application_text like '%$search%'";
+    $where_string = " and (full_name like '%$search%' or application_text like '%$search%')";
 }
 
 if (isset($_GET['date'])) {
@@ -25,14 +27,8 @@ if (isset($_GET['date'])) {
 
     if (!empty($date)) {
         if (preg_match('/^[\d]{4,4}-[\d]{2}-[\d][\d]$/', $date)) {
-            if ($request != '') {
-                $request .= " and";
-            }
-            else {
-                $request = " where";
-            }
 
-            $request .= " applications.date between '$date 00:00:00' and '$date 23:59:59'";
+            $where_string .= " and applications.date between '$date 00:00:00' and '$date 23:59:59'";
         }
         else {
             exit (json_encode( array(
@@ -49,7 +45,7 @@ if (isset($_GET['date'])) {
     }
 }
 else {
-    if (isset($_GET['period'])) {
+    /*if (isset($_GET['period'])) {
         $period = trim(htmlspecialchars(stripslashes($_GET['period'])));
 
         if (floatval($period) > 0) {
@@ -69,7 +65,7 @@ else {
                 'message' => 'Invalid value of period'
             )));
         }
-    }
+    }*/
 }
 
 if (isset($_GET['sort']) && isset($_GET['sort_by'])) {
@@ -78,8 +74,8 @@ if (isset($_GET['sort']) && isset($_GET['sort_by'])) {
 
     if ($sort == 'asc' || $sort == 'desc')
     {
-        if (!empty($sort_by) && intval($sort_by) > 0) {
-            $request .= " order by " . ($sort_by + 1) . " $sort";
+        if (!empty($sort_by)) {
+            $sort_string .= " order by " . $sort_by . " $sort";
         }
         else {
             exit (json_encode( array(
@@ -96,20 +92,16 @@ if (isset($_GET['sort']) && isset($_GET['sort_by'])) {
     }
 }
 else {
-    if (isset($sort) || isset($sort_by)) {
-        exit (json_encode( array(
-            'status' => 'error',
-            'message' => 'For sort query answer you need send "sort" and "sort_by" parametrs'
-        )));
-    }
+    $sort_string .= " order by date asc";
 }
 
 if (isset($_GET['page'])) {
     $page = trim(htmlspecialchars(stripslashes($_GET['page'])));
+    $current_page = $page;
 
     if (intval($page) > 0) {
         $page--;
-        $request .= " limit " . ($page * $items_count) . ", $items_count";
+        $sort_string .= " limit " . ($page * $items_count) . ", $items_count";
     }
     else {
         exit (json_encode( array(
@@ -119,13 +111,14 @@ if (isset($_GET['page'])) {
     }
 }
 else {
-    $request .= " limit 0, $items_count";
+    $sort_string .= " limit 0, $items_count";
 }
 
 $query = 'select applications.*
-          FROM applications join processing
-          on applications.id_application <> processing.id_application' . 
-          $request;
+          FROM applications left join processing
+          on applications.id_application = processing.id_application
+          where id_processing is null' . 
+          $where_string . $sort_string;
 
 $result = mysqli_query($connection, $query) or
           exit(json_encode(array(
@@ -137,11 +130,56 @@ $result = mysqli_query($connection, $query) or
 $result_array = array();
 $i = 0;
 while ($row = mysqli_fetch_array($result)) {
-    $result_array[$i] = $row;
+    $result_array[$i] = array(
+        "application_code" => $row["application_code"],
+        "application_text" => $row["application_text"],
+        "date" => $row["date"],
+        "dept" => $row["dept"],
+        "full_name" => $row["full_name"],
+        "mail" => $row["mail"],
+        "office" => $row["office"],
+        "phone_number" => $row["phone_number"],
+        "phone_type" => $row["phone_type"],
+        "unit" => $row["unit"]
+    );
     $i++;
+}
+
+$query = 'select count(applications.id_application)
+          FROM applications left join processing
+          on applications.id_application = processing.id_application
+          where id_processing is null' . 
+          $where_string;
+
+$result = mysqli_query($connection, $query) or
+          exit(json_encode(array(
+              'status' => 'error',
+              'message' => 'Data base error',
+              'mysql_error' => mysqli_error($connection)
+          )));
+
+$total_count = mysqli_fetch_array($result)[0];
+$loaded_count = $current_page * $items_count;
+
+if ($loaded_count > $total_count) {
+    $loaded_count = $total_count;
+}
+
+if($total_count - $loaded_count > $items_count) {
+    $next_page_count = $items_count;
+}
+else {
+    $next_page_count = $total_count - $loaded_count;
 }
 
 exit(json_encode(array(
     'status' => 'success',
-    'data' => $result_array
+    'data' => array(
+        'applications' => $result_array,
+        'pagination' => array(
+            'tottal_count' => intval($total_count),
+            'loaded_count' => $loaded_count,
+            'next_page_count' => $next_page_count
+        )
+    )
 )));

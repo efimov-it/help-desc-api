@@ -11,7 +11,7 @@ require_once '../../db_connect.php';
 
 $query = "select *
           from applications
-          where id_application = $key";
+          where application_code = \"$key\"";
 
 $result = mysqli_query($connection, $query) or
           exit(json_encode(array(
@@ -24,6 +24,7 @@ if (mysqli_num_rows($result) > 0) {
     $application_row = mysqli_fetch_array($result);
     $application = array();
     $application['id_application'] = $application_row['id_application'];
+    $application['key'] = $application_row['application_code'];
     $application['date'] = $application_row['date'];
     $application['application_text'] = $application_row['application_text'];
     $application['status'] = "created";
@@ -85,7 +86,7 @@ if (mysqli_num_rows($result) > 0) {
         $application['processing_date'] = $processing['date'];
         $application['status'] = "processing";
 
-        $query = "select id_completed
+        $query = "select *
                   from completed
                   where id_processing = " . $processing['id_processing'];
 
@@ -104,6 +105,8 @@ if (mysqli_num_rows($result) > 0) {
             $application['status'] = "completed";
         }
     }
+
+    unset($application['id_application']);
 
     exit(json_encode(array(
         'status' => 'success',
