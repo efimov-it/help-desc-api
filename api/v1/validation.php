@@ -25,7 +25,7 @@ function validation ($key, $value, $connection) {
         if (mysqli_num_rows($result) > 0) {
             exit ( json_encode ( array (
                 'status' => 'error',
-                'message' => 'User with login "' . $value . '" already exist'
+                'message' => 'User with this login already exist'
             )));
         }
 

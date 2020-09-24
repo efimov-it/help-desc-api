@@ -1,4 +1,5 @@
 <?php
+header('Access-Control-Allow-Headers: *');
 
 if (isset($_GET['key']) && !empty($_GET['key']))
     $key = trim(htmlspecialchars(stripslashes($_GET['key'])));

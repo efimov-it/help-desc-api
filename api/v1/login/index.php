@@ -58,19 +58,21 @@ if (mysqli_num_rows($result) > 0) {
                         expires_in = $expires_in
                     where id_user = $id_user";
 
-        $result = mysqli_query($connection, $query);
+        $result = mysqli_query($connection, $query) or
+                  exit(json_encode(array(
+                      'status' => 'error',
+                      'messages' => 'Data base error',
+                      'mysql_error' => mysqli_error($connection)
+                  )));
 
-        if ($result) {
-            exit (json_encode(array(
-                'status' => 'success',
-                'data' => array (
-                    'token' => $new_token,
-                    'expires_in' => $expires_in,
-                    'user_type' => $user_type
-                )
-            )));
-        }
-        echo 123;
+        exit (json_encode(array(
+            'status' => 'success',
+            'data' => array (
+                'token' => $new_token,
+                'expires_in' => $expires_in,
+                'user_type' => $user_type
+            )
+        )));
     }
     else {
         $time = time();
@@ -80,21 +82,21 @@ if (mysqli_num_rows($result) > 0) {
                 (token, date, id_user, expires_in)
                 values ('$token', $time, $id_user, $expires_in)";
 
-        $result = mysqli_query($connection, $query);
+        $result = mysqli_query($connection, $query) or
+                  exit(json_encode(array(
+                      'status' => 'error',
+                      'messages' => 'Data base error',
+                      'mysql_error' => mysqli_error($connection)
+                  )));
 
-        if ($result) {
-            exit (json_encode(array(
-                'status' => 'success',
-                'data' => array (
-                    'token' => $token,
-                    'expires_in' => $expires_in,
-                    'user_type' => $user_type
-                )
-            )));
-        }
-        else {
-            echo mysqli_error($connection);
-        }
+        exit (json_encode(array(
+            'status' => 'success',
+            'data' => array (
+                'token' => $token,
+                'expires_in' => $expires_in,
+                'user_type' => $user_type
+            )
+        )));
     }
 }
 else {
