@@ -1,4 +1,5 @@
 <?php
+header('Access-Control-Allow-Headers: *');
 
 require_once '../../../get_token.php';
 require_once '../../../check_auth.php';
@@ -9,7 +10,7 @@ if ($id_user != false) {
     $query = "select count(processing.id_processing)
               from processing left join completed
                    on processing.id_processing = completed.id_processing
-              where id_user = ($id_user or id_operator = $id_user) and id_completed is null";
+              where (id_user = $id_user or id_operator = $id_user) and id_completed is null";
 
     $result = mysqli_query($connection, $query) or
               exit(json_encode(array(

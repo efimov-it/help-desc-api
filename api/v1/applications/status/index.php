@@ -65,7 +65,7 @@ if (mysqli_num_rows($result) > 0) {
         else {
             $query = "select *
                       from users
-                      where id_user = in(" . $processing['id_user'] . ", " . $processing['id_operator'] . ")";
+                      where id_user in(" . $processing['id_user'] . "," . $processing['id_operator'] . ")";
 
             $result = mysqli_query($connection, $query) or
                       exit(json_encode(array(

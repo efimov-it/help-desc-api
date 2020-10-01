@@ -1,7 +1,7 @@
 <?php
 
-require_once '../get_token.php';
-require_once '../check_auth.php';
+require_once '../../get_token.php';
+require_once '../../check_auth.php';
 
 $id_user = check_auth($token, $connection);
 
@@ -114,10 +114,12 @@ else {
     $sort_string .= " limit 0, $items_count";
 }
 
-$query = 'select applications.*
+$query = "select applications.*
           FROM applications left join processing
             on applications.id_application = processing.id_application
-          where id_processing is null' . 
+            left join completed
+            on processing.id_processing = completed.id_processing
+          where (processing.id_user = $id_user or processing.id_operator = $id_user) and id_completed is null " . 
           $where_string . $sort_string;
 
 $result = mysqli_query($connection, $query) or
@@ -164,10 +166,12 @@ while ($row = mysqli_fetch_array($result)) {
     $i++;
 }
 
-$query = 'select count(applications.id_application)
+$query = "select count(applications.id_application)
           FROM applications left join processing
-          on applications.id_application = processing.id_application
-          where id_processing is null' . 
+            on applications.id_application = processing.id_application
+            left join completed
+            on processing.id_processing = completed.id_processing
+          where (processing.id_user = $id_user or processing.id_operator = $id_user) and id_completed is null " . 
           $where_string;
 
 $result = mysqli_query($connection, $query) or

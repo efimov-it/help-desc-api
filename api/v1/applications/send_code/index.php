@@ -1,4 +1,5 @@
 <?php
+header('Access-Control-Allow-Headers: *');
 
 require_once '../../db_connect.php';
 
@@ -58,7 +59,6 @@ if(mysqli_num_rows($result) > 0) {
     exit(json_encode(array(
         'status' => 'success'
     )));
-    // echo $mail_html;
 }
 else {
     exit(json_encode(array(
