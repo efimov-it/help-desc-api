@@ -11,7 +11,7 @@ function get_user_type($id_user, $connection) {
     )));
 
     if (mysqli_num_rows($result) == 1) {
-        return mysqli_fetch_array($result)[0];
+        return intval(mysqli_fetch_array($result)[0]);
     }
     else {
         exit (json_encode(array(
