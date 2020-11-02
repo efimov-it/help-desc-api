@@ -1,4 +1,6 @@
 <?php
+header('Access-Control-Allow-Headers: *');
+header('Access-Control-Allow-Methods: *');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     require_once 'post.php';
