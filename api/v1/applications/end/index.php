@@ -60,7 +60,7 @@ if(mysqli_num_rows($result) > 0) {
     )));
 }
 
-$query = "select processing.*
+$query = "select processing.*, applications.mail, applications.subscribe
         from applications right join processing
         on applications.id_application = processing.id_application
         where application_code = $key";
@@ -96,7 +96,7 @@ if(mysqli_num_rows($result) > 0) {
                   $id_user != $processing['id_user'] &&
                   $id_user != $processing['id_operator'] ? '<b>От лица администратора системы:</b><br/>' : '';
 
-    $query = "inser into completed
+    $query = "insert into completed
               (id_processing, result_text)
               values (".$processing['id_processing'].", '$admin_mess $message')";
     $result = mysqli_query($connection, $query) or
@@ -105,6 +105,11 @@ if(mysqli_num_rows($result) > 0) {
                   'message' => 'Data base error',
                   'mysql_error' => mysqli_error($connection)
               )));
+
+    if (intval($processing['subscribe']) === 1) {
+        send_mail($key, $processing['mail'], $admin_mess.$message);
+    }
+
     exit(json_encode(array(
         'status' => 'success'
     )));
@@ -117,7 +122,7 @@ else {
         )));
     }
     else {
-        $query = "select id_application from applications where application_code = $key";
+        $query = "select id_application, mail from applications where application_code = $key";
         $result = mysqli_query($connection, $query) or
                   exit(json_encode(array(
                       'status' => 'error',
@@ -126,7 +131,9 @@ else {
                   )));
 
         if (mysqli_num_rows($result) > 0) {
-            $id_application = mysqli_fetch_array($result)['id_application'];
+            $application_data = mysqli_fetch_array($result);
+            $id_application = $application_data['id_application'];
+            $mail = $application_data['mail'];
             $query = "insert into processing
                       (id_user, id_application, id_operator)
                       values ($id_user, $id_application, $id_user)";
@@ -140,9 +147,10 @@ else {
 
             $id_processing = mysqli_insert_id($connection);
             
+            $message = "<i>Заявка завершена досрочно.</i><br />$message";
             $query = "insert into completed
                       (id_processing, result_text)
-                      values ($id_processing, '<i>Заявка завершена досрочно.</i><br />$message')";
+                      values ($id_processing, '$message')";
 
             $result = mysqli_query($connection, $query) or
                       exit(json_encode(array(
@@ -150,6 +158,10 @@ else {
                           'message' => 'Data base error',
                           'mysql_error' => mysqli_error($connection)
                       )));
+
+            if (intval($processing['subscribe']) === 1) {
+                send_mail($key, $mail, $message);
+            }
 
             exit(json_encode(array(
                 'status' => 'success'
@@ -162,4 +174,15 @@ else {
             )));
         }
     }
+}
+
+function send_mail ($key, $mail, $message) {
+    $mail_html = file_get_contents('../application_status_update.html');
+
+    $mail_html = substr_replace($mail_html, $key, strpos($mail_html, "[key]"), 5);
+    $mail_html = substr_replace($mail_html, $message, strpos($mail_html, "[message]"), 9);
+    mail($mail,
+        "Заявка #$key",
+        $mail_html,
+        "From: Тех. поддержка МГТУ \"Станкин\" <bot@help.stankin.ru>\r\nContent-Type: text/html; charset=UTF-8");
 }

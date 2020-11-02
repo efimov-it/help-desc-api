@@ -31,7 +31,7 @@ if (!isset($_POST['message']) || empty($_POST['message'])) {
 $key = trim(stripslashes(htmlspecialchars($_POST['key'])));
 $message = trim(stripslashes(htmlspecialchars($_POST['message'])));
 
-$query = "select id_application
+$query = "select id_application, mail
           from applications
           where application_code = $key";
 
@@ -43,7 +43,9 @@ $result = mysqli_query($connection, $query) or
           )));
 
 if (mysqli_num_rows($result) > 0) {
-    $id_application = mysqli_fetch_array($result)['id_application'];
+    $application_data = mysqli_fetch_array($result);
+    $id_application = $application_data['id_application'];
+    $mail = $application_data['mail'];
 
     $query = "insert into application_message
               (id_application, id_user, message)
@@ -55,6 +57,15 @@ if (mysqli_num_rows($result) > 0) {
         'message' => 'Data base error',
         'mysql_error' => mysqli_error($connection)
     )));
+    
+    $mail_html = file_get_contents('../application_status_update.html');
+
+    $mail_html = substr_replace($mail_html, $key, strpos($mail_html, "[key]"), 5);
+    $mail_html = substr_replace($mail_html, $message, strpos($mail_html, "[message]"), 9);
+    mail($mail,
+        "Заявка #$key",
+        $mail_html,
+        "From: Тех. поддержка МГТУ \"Станкин\" <bot@help.stankin.ru>\r\nContent-Type: text/html; charset=UTF-8");
 
     exit(json_encode(array(
         'status' => 'success'

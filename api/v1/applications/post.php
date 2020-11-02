@@ -45,6 +45,11 @@ else {
 if (isset($_POST['office'])) {
     $office = trim(htmlspecialchars(stripslashes($_POST['office'])));
 }
+
+if (isset($_POST['subscribe'])) {
+    $subscribe = trim(htmlspecialchars(stripslashes($_POST['subscribe'])));
+}
+
 else {
     exit ( json_encode ( array (
                 'status' => 'error',
@@ -96,7 +101,26 @@ if ( strlen ( $phone_number ) > 18) {
     )));
 }
 
-if (!strrpos($mail, '@') || !strrpos($mail, '.')) {
+if ( strlen ( $office ) > 10) {
+    exit ( json_encode ( array (
+                'status' => 'error',
+                'message' => 'Too long value of office'
+    )));
+}
+if ( strlen ( $unit ) > 200) {
+    exit ( json_encode ( array (
+                'status' => 'error',
+                'message' => 'Too long value of unit'
+    )));
+}
+if ( strlen ( $dept ) > 200) {
+    exit ( json_encode ( array (
+                'status' => 'error',
+                'message' => 'Too long value of dept'
+    )));
+}
+
+if (!strrpos($mail, '@') || !strrpos($mail, '.') || strlen ($mail) > 120) {
     exit ( json_encode ( array (
                 'status' => 'error',
                 'message' => 'Invalid value of mail'
@@ -106,8 +130,8 @@ if (!strrpos($mail, '@') || !strrpos($mail, '.')) {
 $application_code = time();
 
 $query ="insert into applications
-         (full_name, phone_type, phone_number, mail, office, unit, dept, application_text, application_code)
-         values ('$full_name', $phone_type, '$phone_number', '$mail', '$office', '$unit', '$dept', '$application_text', '$application_code')";
+         (full_name, phone_type, phone_number, mail, office, unit, dept, application_text, application_code, subscribe)
+         values ('$full_name', $phone_type, '$phone_number', '$mail', '$office', '$unit', '$dept', '$application_text', '$application_code', " . ($subscribe === 'true' ? 1 : 0) . ")";
 
 $result = mysqli_query($connection, $query) or exit (json_encode ( array (
                                                         'status' => 'error',
@@ -118,7 +142,11 @@ $result = mysqli_query($connection, $query) or exit (json_encode ( array (
 if($result) {
 
     $mail_html = file_get_contents('./application_created_mail.html');
-
+    $subscribe_text = "";
+    if ($subscribe === "true") {
+        $subscribe_text = "<p class=\"message-text\">В дальнейшем, при изменении статуса заявки, Вам также будут поступать письма о статусе Вашей заявки.</p>";
+    }
+    $mail_html = substr_replace($mail_html, $subscribe_text, strpos($mail_html, "[subscribe_text]"), 16);
     $mail_html = substr_replace($mail_html, $full_name, strpos($mail_html, "[full_name]"), 11);
     $mail_html = substr_replace($mail_html, $application_code, strpos($mail_html, "[key]"), 5);
     mail($_GET['mail'],
