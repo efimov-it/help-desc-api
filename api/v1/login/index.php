@@ -50,11 +50,11 @@ if (mysqli_num_rows($result) > 0) {
 
     if (mysqli_num_rows($result) == 1) {
         $time = time();
-        $new_token = md5($time . $id_user);
+        $token = mysqli_fetch_array($result)['token'];
+        // $new_token = md5($time . $id_user);
         $expires_in = $time + 86400;
         $query = "update auth
                     set date = $time,
-                        token = \"$new_token\",
                         expires_in = $expires_in
                     where id_user = $id_user";
 
@@ -68,7 +68,7 @@ if (mysqli_num_rows($result) > 0) {
         exit (json_encode(array(
             'status' => 'success',
             'data' => array (
-                'token' => $new_token,
+                'token' => $token,
                 'expires_in' => $expires_in,
                 'user_type' => $user_type
             )
