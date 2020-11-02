@@ -38,7 +38,7 @@ function validation ($key, $value, $connection) {
     }
 
     if ($key == 'mail') {
-        if (!preg_match('/^[\w-_]{1,}@[\w-_]{1,}\.[\w]{1,}$/u', $value)) {
+        if (!preg_match('/^[\w-_\.]{1,}@[\w-_]{1,}\.[\w]{1,}$/u', $value)) {
             exit ( json_encode ( array (
                 'status' => 'error',
                 'message' => 'Invalid value of mail'
@@ -46,11 +46,11 @@ function validation ($key, $value, $connection) {
         }
     }
 
-    if ($key == 'password') {
+    if ($key == 'password' || $key == 'repeat_password') {
         if (!preg_match('/^[A-Za-zА-Я-а-яЁё0-9!@#$%^&*()_+~]{8,}$/u', $value)) {
             exit ( json_encode ( array (
                 'status' => 'error',
-                'message' => 'Invalid value of password'
+                'message' => 'Invalid value of '.$key
             )));
         }
     }
@@ -65,7 +65,7 @@ function validation ($key, $value, $connection) {
     }
 
     if ($key == 'user_post') {
-        if (strlen($value) < 3) {
+        if (strlen($value)/2 < 3) {
             exit ( json_encode ( array (
                 'status' => 'error',
                 'message' => 'Invalid value of user_post'
