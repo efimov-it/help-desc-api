@@ -1,7 +1,8 @@
 <?php
 header('Access-Control-Allow-Headers: *');
+header('Access-Control-Allow-Methods: *');
 
-if ($_SERVER['REQUEST_METHOD'] == 'put') {
+if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     require_once 'put.php';
 }
 elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
